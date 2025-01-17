@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deploying Node.js and Angular on Nginx</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 20px;
+      background-color: #f4f4f9;
+      color: #333;
+    }
+
+    h1, h2 {
+      color: #0056b3;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    pre {
+      background: #e9ecef;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+      font-size: 14px;
+    }
+
+    code {
+      color: #d63384;
+      font-weight: bold;
+    }
+
+    ul {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+
+    li {
+      margin-bottom: 10px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .note {
+      background: #fffae6;
+      border-left: 5px solid #ffd54f;
+      padding: 10px;
+      margin: 20px 0;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Deploying Node.js and Angular on Nginx</h1>
+
+    <h2>1. Install Required Software</h2>
+    <ul>
+      <li>Update your system and install Nginx:
+        <pre><code>sudo apt update
+sudo apt install nginx</code></pre>
+      </li>
+      <li>Install Node.js and npm:
+        <pre><code>sudo apt install nodejs
+sudo apt install npm</code></pre>
+      </li>
+    </ul>
+
+    <h2>2. Build the Angular Project</h2>
+    <p>Build your Angular project for production:</p>
+    <pre><code>ng build --prod</code></pre>
+    <p>The output will be in the <code>dist</code> folder.</p>
+
+    <h2>3. Set Up the Angular Project with Nginx</h2>
+    <ul>
+      <li>Copy the <code>dist</code> folder contents to Nginx's root directory:
+        <pre><code>sudo cp -r dist/your-angular-project/* /var/www/html/</code></pre>
+      </li>
+      <li>Update the Nginx configuration:
+        <pre><code>sudo nano /etc/nginx/sites-available/default</code></pre>
+      </li>
+      <li>Replace the <code>server</code> block with:
+        <pre><code>server {
+    listen 80;
+    server_name your-domain.com;
+
+    root /var/www/html;
+    index index.html;
+
+    location / {
+        try_files $uri /index.html;
+    }
+}</code></pre>
+      </li>
+      <li>Restart Nginx:
+        <pre><code>sudo systemctl restart nginx</code></pre>
+      </li>
+    </ul>
+
+    <h2>4. Set Up the Node.js Backend</h2>
+    <ul>
+      <li>Move Node.js files to a directory, e.g., <code>/var/www/backend</code>:</li>
+      <li>Install dependencies and start the server:
+        <pre><code>cd /var/www/backend
+npm install
+node server.js</code></pre>
+      </li>
+      <li>Use PM2 to keep the Node.js server running:
+        <pre><code>sudo npm install pm2 -g
+pm2 start server.js
+pm2 save</code></pre>
+      </li>
+    </ul>
+
+    <h2>5. Configure Nginx for Node.js API</h2>
+    <p>Add a reverse proxy for Node.js in the Nginx configuration:</p>
+    <pre><code>server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        root /var/www/html;
+        index index.html;
+        try_files $uri /index.html;
+    }
+
+    location /api/ {
+        proxy_pass http://localhost:3000/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}</code></pre>
+    <p>Restart Nginx:</p>
+    <pre><code>sudo systemctl restart nginx</code></pre>
+
+    <h2>6. Test Your Application</h2>
+    <ul>
+      <li>Visit your server's IP or domain to test the Angular app.</li>
+      <li>Test the <code>/api</code> endpoint to confirm Node.js backend is working.</li>
+    </ul>
+
+    <div class="note">
+      <strong>Note:</strong> Ensure your Node.js app and Angular app configurations match your deployment environment.
+    </div>
+  </div>
+</body>
+</html>
